@@ -4,52 +4,64 @@ import requests
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# 1. 🌐 كود السيرفر الوهمي المطور لفتح المنفذ 10000 تلقائياً وإرضاء موقع Render
+# 1. ⚙️ إعدادات تليجرام الخاصة بكم (تُجلب تلقائياً من إعدادات البيئة في Render)
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
+
+# 2. 🌐 كود السيرفر الوهمي لتشغيل البوت مجاناً على Render
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Trading Bot Mode is Active!")
+        self.wfile.write(b"Bot is active and running successfully!")
 
-def run_render_server():
+def run_server():
     port = int(os.environ.get("PORT", 10000))
     server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    print(f"Server started on port {port}")
     server.serve_forever()
 
-threading.Thread(target=run_render_server, daemon=True).start()
+# تشغيل سيرفر الويب في الخلفية لمنع توقف Render
+threading.Thread(target=run_server, daemon=True).start()
 
-# 2. ⚙️ جلب توكن تليجرام ورقم الحساب تلقائياً من إعدادات البيئة في Render
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
-
+# 3. 💬 دالة إرسال الرسائل إلى تليجرام
 def send_telegram_message(message):
-    if not TELEGRAM_TOKEN or not CHAT_ID:
-        print("تنبيه: التوكن أو الآيدي غير متوفرين في الإعدادات!")
-        return
-    
-    # تصحيح الرابط البرمجي وتفادي خطأ الـ Failed to parse نهائياً
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
     try:
         response = requests.post(url, json=payload)
-        print(f"Telegram response: {response.status_code}")
+        return response.json()
     except Exception as e:
         print(f"Error sending message: {e}")
 
-# 3. 🤖 دالة إرسال وصف البوت التجريبية فوراً لتأكيد تشغيل الربط
-def send_bot_description():
-    description_text = (
-        "📊 **مرحباً بك في روبوت التداول الذكي المطور!** 📊\n\n"
-        "🤖 **حالة البوت الحالية:** يعمل الآن بنجاح ومستقر 100% على سيرفرات Render مجاناً!\n\n"
-        "🛠️ **وظيفة الروبوت الأساسية:**\n"
-        "• مراقبة أسواق العملات الرقمية والأسواق المالية على مدار 24 ساعة.\n"
-        "• فحص التحركات السعرية والتقلبات بدقة متناهية كل 10 ثوانٍ.\n"
-        "• استخراج إشارات صعود وهبوط آلية بناءً على المؤشرات الفنية المبرمجة.\n"
-        "• إرسال تنبيهات صفقات شراء (Buy) وصفقات بيع (Sell) لحظية لهاتفك.\n\n"
-        "🚀 *تلقيك لهذه الرسالة يعني أن تعبك وسهرك نجح بالكامل والربط البرمجي بين السيرفر وتليجرام يعمل بأمان تام!*"
-    )
-    # إرسال الرسالة فوراً عند التشغيل
-    send_telegram_message(description_text)
+# 4. 📊 دالة جلب الأسعار وفحص الاستراتيجية (مثال باستخدام سعر البيتكوين كمؤشر)
+def trading_strategy_loop():
+    # نرسل رسالة ترحيبية للتأكد أن البوت اتصل بتليجرام بنجاح
+    send_telegram_message("🤖 تم تشغيل الروبوت بنجاح! وبدأت مراقبة الأسواق الآن...")
+    
+    while True:
+        try:
+            # جلب سعر البيتكوين كمثال حي من منصة Binance مجاناً وبدون حساب
+            api_url = "https://binance.com"
+            response = requests.get(api_url).json()
+            current_price = float(response['price'])
+            
+            # --- 🛠️ استراتيجية وهمية للفحص (يمكنكم تعديل الشروط لاحقاً) ---
+            last_digit = int(str(int(current_price))[-1])
+            
+            if last_digit == 7: # شرط صعود وهمي للفحص والتجربة
+                msg = f"📈 **إشارة صعود (شراء)**\nالزوج: BTC/USDT\nالسعر الحالي: ${current_price:,}"
+                send_telegram_message(msg)
+                
+            elif last_digit == 3: # شرط هبوط وهمي للفحص والتجربة
+                msg = f"📉 **إشارة هبوط (بيع)**\nالزوج: BTC/USDT\nالسعر الحالي: ${current_price:,}"
+                send_telegram_message(msg)
+                
+        except Exception as e:
+            print(f"Error in trading loop: {e}")
+            
+        # يفحص السوق كل 10 ثوانٍ
+        time.sleep(10)
 
-# تشغيل إرسال الوصف فوراً للتجربة والتأكد
-send_bot_description()
+# تشغيل عقل الروبوت والاستراتيجية في الخلفية
+trading_strategy_loop()
