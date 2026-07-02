@@ -13,7 +13,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Trading Bot is Active and running!")
+        self.wfile.write(b"Professional Trading Bot is Active!")
 
 def run_server():
     port = int(os.environ.get("PORT", 10000))
@@ -31,52 +31,56 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"Error sending message: {e}")
 
-# 4. 📊 عقل الروبوت: استراتيجية تداول حقيقية وسهلة (تعتمد على تغير السعر)
+# 4. 📊 عقل الروبوت: إستراتيجية تداول دقيقة تعتمد على حركة الأسعار الحقيقية
 def trading_strategy_loop():
-    send_telegram_message("🚀 **بدأت إستراتيجية التداول الحقيقية الآن!**\nيقوم الروبوت بمراقبة حركة السعر وإرسال الصفقات فوراً عند حدوث تغير حاد في السوق...")
+    send_telegram_message("⚙️ **تم تفعيل رادار التداول الاحترافي الحقيقي!**\nالروبوت يقوم الآن بتحليل الاتجاه اللحظي لزوج BTC/USDT وإرسال صفقات دقيقة...")
     
-    # متغير لحفظ السعر السابق لمقارنته بالسعر الجديد
-    previous_price = None
+    prices_history = []
     
     while True:
         try:
-            # جلب السعر الحي للبيتكوين من Binance
+            # جلب آخر الأسعار الحية للبيتكوين من Binance
             api_url = "https://binance.com"
             response = requests.get(api_url).json()
             current_price = float(response['price'])
             
-            if previous_price is not None:
-                # حساب نسبة التغير بين السعر الحالي والسابق
-                price_change = current_price - previous_price
-                
-                # 📈 شرط الصعود: إذا ارتفع السعر بأكثر من 2 دولار في آخر 10 ثوانٍ
-                if price_change >= 2.0:
-                    msg = (
-                        f"📈 **إشارة صعود حقيقية (شراء / BUY)**\n"
-                        f"• **الزوج:** BTC/USDT\n"
-                        f"• **سعر الدخول:** ${current_price:,}\n"
-                        f"• **الحركة:** ارتفاع سريع بمقدار ${price_change:.2f}"
-                    )
-                    send_telegram_message(msg)
-                
-                # 📉 شرط الهبوط: إذا انخفض السعر بأكثر من 2 دولار في آخر 10 ثوانٍ
-                elif price_change <= -2.0:
-                    msg = (
-                        f"📉 **إشارة هبوط حقيقية (بيع / -SELL)**\n"
-                        f"• **الزوج:** BTC/USDT\n"
-                        f"• **سعر الدخول:** ${current_price:,}\n"
-                        f"• **الحركة:** انخفاض سريع بمقدار ${abs(price_change):.2f}"
-                    )
-                    send_telegram_message(msg)
+            # حفظ السعر في الذاكرة لعمل متوسط حسابي دقيق
+            prices_history.append(current_price)
+            if len(prices_history) > 10:  # الاحتفاظ بآخر 10 قراءات فقط لحساب الاتجاه
+                prices_history.pop(0)
             
-            # حفظ السعر الحالي ليصبح هو السعر السابق في الفحص القادم
-            previous_price = current_price
+            if len(prices_history) >= 5:
+                # حساب متوسط السعر للفترة السابقة (Moving Average مصغر)
+                average_price = sum(prices_history[:-1]) / len(prices_history[:-1])
                 
+                # 📈 إشارة صعود دقيقة: إذا اخترق السعر الحالي المتوسط للأعلى بفارق ملحوظ
+                if current_price > (average_price + 5.0):
+                    msg = (
+                        f"🎯 **إشارة صعود دقيقة (شراء / BUY)**\n"
+                        f"• **الزوج:** BTC/USDT\n"
+                        f"• **سعر الدخول:** ${current_price:,}\n"
+                        f"• **الاتجاه:** اختراق إيجابي صاعد فوق المتوسط اللحظي السعري"
+                    )
+                    send_telegram_message(msg)
+                    # تنظيف الذاكرة مؤقتاً لتجنب تكرار الإشارة لنفس الحركة
+                    prices_history = [current_price]
+                
+                # 📉 إشارة هبوط دقيقة: إذا كسر السعر الحالي المتوسط للأسفل بفارق ملحوظ
+                elif current_price < (average_price - 5.0):
+                    msg = (
+                        f"🎯 **إشارة هبوط دقيقة (بيع / SELL)**\n"
+                        f"• **الزوج:** BTC/USDT\n"
+                        f"• **سعر الدخول:** ${current_price:,}\n"
+                        f"• **الاتجاه:** كسر سلبي هابط تحت المتوسط اللحظي السعري"
+                    )
+                    send_telegram_message(msg)
+                    prices_history = [current_price]
+                    
         except Exception as e:
             print(f"Error in trading loop: {e}")
             
-        # فحص السوق كل 10 ثوانٍ بشكل مستمر
+        # فحص وتحليل دقيق للسوق كل 10 ثوانٍ
         time.sleep(10)
 
-# تشغيل الاستراتيجية الحقيقية
+# إطلاق الروبوت الحقيقي
 trading_strategy_loop()
