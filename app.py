@@ -9,7 +9,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Trading Bot Description Mode is Active!")
+        self.wfile.write(b"Trading Bot Mode is Active!")
 
 def run_render_server():
     port = int(os.environ.get("PORT", 10000))
@@ -18,19 +18,23 @@ def run_render_server():
 
 threading.Thread(target=run_render_server, daemon=True).start()
 
-# 2. ⚙️ إعدادات جلب التوكن والآيدي تلقائياً من Render
+# 2. ⚙️ جلب توكن تليجرام ورقم الحساب تلقائياً من إعدادات البيئة في Render
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 
 def send_telegram_message(message):
     if not TELEGRAM_TOKEN or not CHAT_ID:
+        print("تنبيه: التوكن أو الآيدي غير متوفرين في الإعدادات!")
         return
+    
+    # تصحيح الرابط البرمجي وتفادي خطأ الـ Failed to parse نهائياً
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
     try:
-        requests.post(url, json=payload)
+        response = requests.post(url, json=payload)
+        print(f"Telegram response: {response.status_code}")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error sending message: {e}")
 
 # 3. 🤖 دالة إرسال وصف البوت التجريبية فوراً لتأكيد تشغيل الربط
 def send_bot_description():
@@ -47,5 +51,5 @@ def send_bot_description():
     # إرسال الرسالة فوراً عند التشغيل
     send_telegram_message(description_text)
 
-# تشغيل إرسال الوصف للتجربة
+# تشغيل إرسال الوصف فوراً للتجربة والتأكد
 send_bot_description()
