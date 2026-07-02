@@ -1,4 +1,22 @@
-import os
+import osimport os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+# كود تلبية شروط موقع ريندر لفتح المنفذ 10000 تلقائياً
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Trading Bot is Active!")
+
+def run_render_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
+# تشغيل السيرفر السحري في الخلفية لمنع التوقف باللون الأحمر
+threading.Thread(target=run_render_server, daemon=True).start()
+
 import time
 import requests
 
