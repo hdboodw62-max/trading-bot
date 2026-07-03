@@ -4,16 +4,12 @@ import requests
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# 1. ⚙️ جلب الإعدادات تلقائياً من Render
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
-
-# 2. 🌐 كود السيرفر الوهمي للبقاء حياً على Render
+# 1. 🌐 كود السيرفر الوهمي للبقاء حياً على Render
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Professional Trading Bot is Active!")
+        self.wfile.write(b"Super Sensitive Bot is Active!")
 
 def run_server():
     port = int(os.environ.get("PORT", 10000))
@@ -22,7 +18,10 @@ def run_server():
 
 threading.Thread(target=run_server, daemon=True).start()
 
-# 3. 💬 دالة إرسال الرسائل إلى تليجرام
+# 2. ⚙️ جلب الإعدادات تلقائياً من Render
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
+
 def send_telegram_message(message):
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
@@ -31,56 +30,51 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"Error sending message: {e}")
 
-# 4. 📊 عقل الروبوت: إستراتيجية تداول دقيقة تعتمد على حركة الأسعار الحقيقية
+# 3. 📊 استراتيجية فائقة الحساسية لإجبار البوت على الإرسال فوراً
 def trading_strategy_loop():
-    send_telegram_message("⚙️ **تم تفعيل رادار التداول الاحترافي الحقيقي!**\nالروبوت يقوم الآن بتحليل الاتجاه اللحظي لزوج BTC/USDT وإرسال صفقات دقيقة...")
+    # رسالة ترحيبية فورية للتأكد من نجاح التحديث
+    send_telegram_message("🔔 **تم تشغيل رادار الفحص السريع والمستمر!**\nسيبدأ الروبوت الآن بضخ الإشارات فوراً مع أي حركة بسيطة في السوق للتأكد من عمل الربط...")
     
-    prices_history = []
+    previous_price = None
     
     while True:
         try:
-            # جلب آخر الأسعار الحية للبيتكوين من Binance
+            # جلب سعر البيتكوين الحي من Binance
             api_url = "https://binance.com"
             response = requests.get(api_url).json()
             current_price = float(response['price'])
+            print(f"Current Bitcoin Price: {current_price}") # لجعل السجلات تتحرك أمامك دائماً
             
-            # حفظ السعر في الذاكرة لعمل متوسط حسابي دقيق
-            prices_history.append(current_price)
-            if len(prices_history) > 10:  # الاحتفاظ بآخر 10 قراءات فقط لحساب الاتجاه
-                prices_history.pop(0)
-            
-            if len(prices_history) >= 5:
-                # حساب متوسط السعر للفترة السابقة (Moving Average مصغر)
-                average_price = sum(prices_history[:-1]) / len(prices_history[:-1])
+            if previous_price is not None:
+                price_change = current_price - previous_price
                 
-                # 📈 إشارة صعود دقيقة: إذا اخترق السعر الحالي المتوسط للأعلى بفارق ملحوظ
-                if current_price > (average_price + 5.0):
+                # شرط صعود فائق الحساسية (أي ارتفاع أكبر من صفر)
+                if price_change > 0:
                     msg = (
-                        f"🎯 **إشارة صعود دقيقة (شراء / BUY)**\n"
+                        f"📈 **إشارة صعود لحظية (شراء / BUY)**\n"
                         f"• **الزوج:** BTC/USDT\n"
-                        f"• **سعر الدخول:** ${current_price:,}\n"
-                        f"• **الاتجاه:** اختراق إيجابي صاعد فوق المتوسط اللحظي السعري"
+                        f"• **السعر:** ${current_price:,}\n"
+                        f"• **الحركة:** صعود طفيف بمقدار ${price_change:.2f}"
                     )
                     send_telegram_message(msg)
-                    # تنظيف الذاكرة مؤقتاً لتجنب تكرار الإشارة لنفس الحركة
-                    prices_history = [current_price]
                 
-                # 📉 إشارة هبوط دقيقة: إذا كسر السعر الحالي المتوسط للأسفل بفارق ملحوظ
-                elif current_price < (average_price - 5.0):
+                # شرط هبوط فائق الحساسية (أي انخفاض أصغر من صفر)
+                elif price_change < 0:
                     msg = (
-                        f"🎯 **إشارة هبوط دقيقة (بيع / SELL)**\n"
+                        f"📉 **إشارة هبوط لحظية (بيع / SELL)**\n"
                         f"• **الزوج:** BTC/USDT\n"
-                        f"• **سعر الدخول:** ${current_price:,}\n"
-                        f"• **الاتجاه:** كسر سلبي هابط تحت المتوسط اللحظي السعري"
+                        f"• **السعر:** ${current_price:,}\n"
+                        f"• **الحركة:** هبوط طفيف بمقدار ${abs(price_change):.2f}"
                     )
                     send_telegram_message(msg)
-                    prices_history = [current_price]
+            
+            previous_price = current_price
                     
         except Exception as e:
             print(f"Error in trading loop: {e}")
             
-        # فحص وتحليل دقيق للسوق كل 10 ثوانٍ
+        # فحص سريع ومستمر كل 10 ثوانٍ
         time.sleep(10)
 
-# إطلاق الروبوت الحقيقي
+# إطلاق الروبوت
 trading_strategy_loop()
